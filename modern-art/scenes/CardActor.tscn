@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://b3g3o6w4o2v1y"]
+
+[ext_resource type="Script" path="res://scripts/CardActor.gd" id="1_u0lq8"]
+
+[node name="CardActor" type="Area2D"]
+script = ExtResource("1_u0lq8")
+
+[node name="Frame" type="Sprite2D" parent="."]
+texture_filter = 0
+
+[node name="Face" type="Sprite2D" parent="."]
+texture_filter = 0
+position = Vector2(0, 0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+

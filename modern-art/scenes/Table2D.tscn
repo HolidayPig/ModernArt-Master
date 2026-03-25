@@ -1,0 +1,95 @@
+[gd_scene format=3 uid="uid://d1h0y7k0j5q3p"]
+
+[ext_resource type="Script" path="res://scripts/Table2D.gd" id="1_1b3t2"]
+
+[node name="Table2D" type="Node2D"]
+script = ExtResource("1_1b3t2")
+
+[node name="Background" type="Sprite2D" parent="."]
+texture_filter = 0
+centered = false
+
+[node name="BoardAnchors" type="Node2D" parent="."]
+
+[node name="DeckAnchor" type="Marker2D" parent="BoardAnchors"]
+position = Vector2(110, 110)
+
+[node name="AuctionAnchor" type="Marker2D" parent="BoardAnchors"]
+position = Vector2(640, 250)
+
+[node name="PlayerCollectionAnchor" type="Marker2D" parent="BoardAnchors"]
+position = Vector2(220, 560)
+
+[node name="AiCollectionAnchor" type="Marker2D" parent="BoardAnchors"]
+position = Vector2(980, 160)
+
+[node name="CardsLayer" type="Node2D" parent="."]
+
+[node name="Hud" type="CanvasLayer" parent="."]
+
+[node name="HudRoot" type="Control" parent="Hud"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="TopBar" type="PanelContainer" parent="Hud/HudRoot"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 56.0
+
+[node name="TopHBox" type="HBoxContainer" parent="Hud/HudRoot/TopBar"]
+theme_override_constants/separation = 12
+
+[node name="RoundLabel" type="Label" parent="Hud/HudRoot/TopBar/TopHBox"]
+text = "第1轮 / 共4轮"
+
+[node name="TurnLabel" type="Label" parent="Hud/HudRoot/TopBar/TopHBox"]
+text = "轮到：你"
+
+[node name="Spacer" type="Control" parent="Hud/HudRoot/TopBar/TopHBox"]
+size_flags_horizontal = 3
+
+[node name="MoneyLabel" type="Label" parent="Hud/HudRoot/TopBar/TopHBox"]
+text = "现金：你 100｜电脑 100"
+
+[node name="AuctionPanel" type="PanelContainer" parent="Hud/HudRoot"]
+anchors_preset = 0
+offset_left = 16.0
+offset_top = 72.0
+offset_right = 440.0
+offset_bottom = 250.0
+
+[node name="AuctionVBox" type="VBoxContainer" parent="Hud/HudRoot/AuctionPanel"]
+theme_override_constants/separation = 8
+
+[node name="AuctionInfo" type="RichTextLabel" parent="Hud/HudRoot/AuctionPanel/AuctionVBox"]
+bbcode_enabled = true
+fit_content = true
+text = "[b]等待出牌…[/b]"
+
+[node name="AuctionButtons" type="HBoxContainer" parent="Hud/HudRoot/AuctionPanel/AuctionVBox"]
+theme_override_constants/separation = 8
+
+[node name="Btn1" type="Button" parent="Hud/HudRoot/AuctionPanel/AuctionVBox/AuctionButtons"]
+text = "—"
+disabled = true
+
+[node name="Btn2" type="Button" parent="Hud/HudRoot/AuctionPanel/AuctionVBox/AuctionButtons"]
+text = "—"
+disabled = true
+
+[node name="Btn3" type="Button" parent="Hud/HudRoot/AuctionPanel/AuctionVBox/AuctionButtons"]
+text = "—"
+disabled = true
+
+[node name="Toast" type="Label" parent="Hud/HudRoot"]
+anchors_preset = 0
+offset_left = 16.0
+offset_top = 260.0
+offset_right = 900.0
+offset_bottom = 292.0
+text = ""
+visible = false
+mouse_filter = 2
+

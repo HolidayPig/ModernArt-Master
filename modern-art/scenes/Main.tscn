@@ -1,0 +1,58 @@
+[gd_scene load_steps=2 format=3 uid="uid://c4q0c5a4qf0g6"]
+
+[ext_resource type="Script" path="res://scripts/Main.gd" id="1_2g4a6"]
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("1_2g4a6")
+
+[node name="WorldRoot" type="Node2D" parent="."]
+visible = false
+
+[node name="Root" type="CanvasLayer" parent="."]
+
+[node name="Menu" type="Control" parent="Root"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Bg" type="ColorRect" parent="Root/Menu"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.06, 0.06, 0.08, 1)
+
+[node name="Center" type="CenterContainer" parent="Root/Menu"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBox" type="VBoxContainer" parent="Root/Menu/Center"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="Root/Menu/Center/VBox"]
+layout_mode = 2
+text = "现代艺术（Modern Art）"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Root/Menu/Center/VBox"]
+layout_mode = 2
+text = "本机人机对战 · 像素风"
+horizontal_alignment = 1
+
+[node name="StartButton" type="Button" parent="Root/Menu/Center/VBox"]
+layout_mode = 2
+text = "开始对局"
+
+[node name="QuitButton" type="Button" parent="Root/Menu/Center/VBox"]
+layout_mode = 2
+text = "退出"
+

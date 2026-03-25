@@ -1,0 +1,168 @@
+[gd_scene format=3 uid="uid://d2d3m2xg6j3wu"]
+
+[ext_resource type="Script" path="res://scripts/TableScene.gd" id="1_4k7tq"]
+
+[node name="TableScene" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_4k7tq")
+
+[node name="Bg" type="ColorRect" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.08, 0.09, 0.11, 1)
+
+[node name="Hud" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="AnimLayer" type="Control" parent="Hud"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="TopBar" type="PanelContainer" parent="Hud"]
+layout_mode = 3
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 72.0
+
+[node name="TopHBox" type="HBoxContainer" parent="Hud/TopBar"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="RoundLabel" type="Label" parent="Hud/TopBar/TopHBox"]
+layout_mode = 2
+text = "第1轮 / 共4轮"
+
+[node name="TurnLabel" type="Label" parent="Hud/TopBar/TopHBox"]
+layout_mode = 2
+text = "轮到：你"
+
+[node name="Spacer" type="Control" parent="Hud/TopBar/TopHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MoneyLabel" type="Label" parent="Hud/TopBar/TopHBox"]
+layout_mode = 2
+text = "现金：你 100｜电脑 100"
+
+[node name="CenterArea" type="HBoxContainer" parent="Hud"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 80.0
+offset_bottom = -160.0
+theme_override_constants/separation = 16
+
+[node name="Left" type="VBoxContainer" parent="Hud/CenterArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="MarketTitle" type="Label" parent="Hud/CenterArea/Left"]
+layout_mode = 2
+text = "拍卖区"
+
+[node name="AuctionPanel" type="PanelContainer" parent="Hud/CenterArea/Left"]
+layout_mode = 2
+size_flags_vertical = 3
+custom_minimum_size = Vector2(420, 0)
+
+[node name="AuctionVBox" type="VBoxContainer" parent="Hud/CenterArea/Left/AuctionPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AuctionInfo" type="RichTextLabel" parent="Hud/CenterArea/Left/AuctionPanel/AuctionVBox"]
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+text = "[b]等待出牌…[/b]\n在你的回合，点击一张手牌发起拍卖。"
+
+[node name="AuctionButtons" type="HBoxContainer" parent="Hud/CenterArea/Left/AuctionPanel/AuctionVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Btn1" type="Button" parent="Hud/CenterArea/Left/AuctionPanel/AuctionVBox/AuctionButtons"]
+layout_mode = 2
+text = "按钮1"
+disabled = true
+
+[node name="Btn2" type="Button" parent="Hud/CenterArea/Left/AuctionPanel/AuctionVBox/AuctionButtons"]
+layout_mode = 2
+text = "按钮2"
+disabled = true
+
+[node name="Btn3" type="Button" parent="Hud/CenterArea/Left/AuctionPanel/AuctionVBox/AuctionButtons"]
+layout_mode = 2
+text = "按钮3"
+disabled = true
+
+[node name="Right" type="VBoxContainer" parent="Hud/CenterArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="GalleryTitle" type="Label" parent="Hud/CenterArea/Right"]
+layout_mode = 2
+text = "本轮行情（按售出数量）"
+
+[node name="GalleryPanel" type="PanelContainer" parent="Hud/CenterArea/Right"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="GalleryRich" type="RichTextLabel" parent="Hud/CenterArea/Right/GalleryPanel"]
+layout_mode = 2
+bbcode_enabled = true
+text = "（未开始）"
+
+[node name="HandBar" type="PanelContainer" parent="Hud"]
+layout_mode = 3
+anchors_preset = 14
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -150.0
+
+[node name="HandVBox" type="VBoxContainer" parent="Hud/HandBar"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="HandTitle" type="Label" parent="Hud/HandBar/HandVBox"]
+layout_mode = 2
+text = "你的手牌（点击出牌）"
+
+[node name="HandScroll" type="ScrollContainer" parent="Hud/HandBar/HandVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 3
+
+[node name="HandHBox" type="HBoxContainer" parent="Hud/HandBar/HandVBox/HandScroll"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Overlay" type="Control" parent="Hud"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Toast" type="Label" parent="Hud/Overlay"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 92.0
+offset_right = 900.0
+offset_bottom = 132.0
+text = ""
+visible = false
+
