@@ -12,16 +12,28 @@ centered = false
 [node name="BoardAnchors" type="Node2D" parent="."]
 
 [node name="DeckAnchor" type="Marker2D" parent="BoardAnchors"]
-position = Vector2(110, 110)
+position = Vector2(640, 170)
 
 [node name="AuctionAnchor" type="Marker2D" parent="BoardAnchors"]
-position = Vector2(640, 250)
+position = Vector2(640, 380)
 
 [node name="PlayerCollectionAnchor" type="Marker2D" parent="BoardAnchors"]
-position = Vector2(220, 560)
+position = Vector2(640, 600)
 
 [node name="AiCollectionAnchor" type="Marker2D" parent="BoardAnchors"]
-position = Vector2(980, 160)
+position = Vector2(960, 320)
+
+[node name="Ai1CollectionAnchor" type="Marker2D" parent="BoardAnchors"]
+position = Vector2(320, 320)
+
+[node name="Ai2CollectionAnchor" type="Marker2D" parent="BoardAnchors"]
+position = Vector2(320, 420)
+
+[node name="Ai3CollectionAnchor" type="Marker2D" parent="BoardAnchors"]
+position = Vector2(960, 420)
+
+[node name="Ai4CollectionAnchor" type="Marker2D" parent="BoardAnchors"]
+position = Vector2(960, 520)
 
 [node name="CardsLayer" type="Node2D" parent="."]
 
@@ -33,53 +45,133 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 
-[node name="TopBar" type="PanelContainer" parent="Hud/HudRoot"]
-anchors_preset = 10
+[node name="LayoutMargin" type="MarginContainer" parent="Hud/HudRoot"]
+anchors_preset = 15
 anchor_right = 1.0
-offset_bottom = 56.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+mouse_filter = 2
 
-[node name="TopHBox" type="HBoxContainer" parent="Hud/HudRoot/TopBar"]
+[node name="LayoutVBox" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin"]
+theme_override_constants/separation = 12
+mouse_filter = 2
+
+[node name="TopBar" type="PanelContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox"]
+mouse_filter = 2
+
+[node name="TopHBox" type="HBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopBar"]
 theme_override_constants/separation = 12
 
-[node name="RoundLabel" type="Label" parent="Hud/HudRoot/TopBar/TopHBox"]
+[node name="RoundLabel" type="Label" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopBar/TopHBox"]
 text = "第1轮 / 共4轮"
 
-[node name="TurnLabel" type="Label" parent="Hud/HudRoot/TopBar/TopHBox"]
+[node name="TurnLabel" type="Label" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopBar/TopHBox"]
 text = "轮到：你"
 
-[node name="Spacer" type="Control" parent="Hud/HudRoot/TopBar/TopHBox"]
+[node name="Spacer" type="Control" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopBar/TopHBox"]
 size_flags_horizontal = 3
 
-[node name="MoneyLabel" type="Label" parent="Hud/HudRoot/TopBar/TopHBox"]
+[node name="MoneyLabel" type="Label" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopBar/TopHBox"]
 text = "现金：你 100｜电脑 100"
 
-[node name="AuctionPanel" type="PanelContainer" parent="Hud/HudRoot"]
-anchors_preset = 0
-offset_left = 16.0
-offset_top = 72.0
-offset_right = 440.0
-offset_bottom = 250.0
+[node name="MainHBox" type="HBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox"]
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+mouse_filter = 2
 
-[node name="AuctionVBox" type="VBoxContainer" parent="Hud/HudRoot/AuctionPanel"]
+[node name="LeftColumn" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox"]
+custom_minimum_size = Vector2(240, 0)
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+mouse_filter = 2
+
+[node name="LeftPlayers" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/LeftColumn"]
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+mouse_filter = 2
+
+[node name="CenterColumn" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox"]
+custom_minimum_size = Vector2(520, 0)
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+mouse_filter = 2
+
+[node name="AuctionCenterPanel" type="PanelContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn"]
+custom_minimum_size = Vector2(520, 220)
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="AuctionVBox" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/AuctionCenterPanel"]
 theme_override_constants/separation = 8
 
-[node name="AuctionInfo" type="RichTextLabel" parent="Hud/HudRoot/AuctionPanel/AuctionVBox"]
+[node name="AuctionInfo" type="RichTextLabel" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/AuctionCenterPanel/AuctionVBox"]
 bbcode_enabled = true
 fit_content = true
 text = "[b]等待出牌…[/b]"
 
-[node name="AuctionButtons" type="HBoxContainer" parent="Hud/HudRoot/AuctionPanel/AuctionVBox"]
+[node name="RightColumn" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox"]
+custom_minimum_size = Vector2(240, 0)
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+mouse_filter = 2
+
+[node name="RightPlayers" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/RightColumn"]
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+mouse_filter = 2
+
+[node name="BottomBar" type="Control" parent="Hud/HudRoot/LayoutMargin/LayoutVBox"]
+custom_minimum_size = Vector2(0, 96)
+mouse_filter = 2
+
+[node name="BottomHBox" type="HBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/BottomBar"]
+theme_override_constants/separation = 12
+mouse_filter = 2
+
+[node name="BottomLeftSpacer" type="Control" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/BottomBar/BottomHBox"]
+size_flags_horizontal = 0
+
+[node name="BottomPlayerSlot" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/BottomBar/BottomHBox"]
+custom_minimum_size = Vector2(240, 0)
+size_flags_horizontal = 0
+mouse_filter = 2
+
+[node name="BottomRightSpacer" type="Control" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/BottomBar/BottomHBox"]
+size_flags_horizontal = 3
+
+[node name="HandActionDock" type="PanelContainer" parent="Hud/HudRoot"]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -340.0
+offset_top = -190.0
+offset_right = -16.0
+offset_bottom = -70.0
+mouse_filter = 1
+
+[node name="DockMargin" type="MarginContainer" parent="Hud/HudRoot/HandActionDock"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="AuctionButtons" type="HBoxContainer" parent="Hud/HudRoot/HandActionDock/DockMargin"]
 theme_override_constants/separation = 8
+mouse_filter = 2
 
-[node name="Btn1" type="Button" parent="Hud/HudRoot/AuctionPanel/AuctionVBox/AuctionButtons"]
+[node name="Btn1" type="Button" parent="Hud/HudRoot/HandActionDock/DockMargin/AuctionButtons"]
 text = "—"
 disabled = true
 
-[node name="Btn2" type="Button" parent="Hud/HudRoot/AuctionPanel/AuctionVBox/AuctionButtons"]
+[node name="Btn2" type="Button" parent="Hud/HudRoot/HandActionDock/DockMargin/AuctionButtons"]
 text = "—"
 disabled = true
 
-[node name="Btn3" type="Button" parent="Hud/HudRoot/AuctionPanel/AuctionVBox/AuctionButtons"]
+[node name="Btn3" type="Button" parent="Hud/HudRoot/HandActionDock/DockMargin/AuctionButtons"]
 text = "—"
 disabled = true
 

@@ -181,7 +181,7 @@ func _setup_human_seller_fixed_price(prompt: Dictionary) -> void:
 func _setup_human_buyer_controls(prompt: Dictionary) -> void:
 	var t := int(prompt["type"])
 	match t:
-		CardDefs.AuctionType.OPEN, CardDefs.AuctionType.DOUBLE:
+		CardDefs.AuctionType.OPEN:
 			_setup_human_buyer_open_like(prompt)
 		CardDefs.AuctionType.ONCE_AROUND:
 			_setup_human_buyer_once_around(prompt)
@@ -205,18 +205,12 @@ func _setup_human_buyer_open_like(prompt: Dictionary) -> void:
 		_prompt_number("输入你的出价", 0, int(cash[0]), 15, func(v):
 			var bid := int(v)
 			var bids := [{"player": 0, "amount": bid, "is_pass": false}]
-			if int(prompt["type"]) == CardDefs.AuctionType.DOUBLE:
-				gs.submit_double_open_bids(bids)
-			else:
-				gs.submit_open_bids(bids)
+			gs.submit_open_bids(bids)
 		)
 	, CONNECT_ONE_SHOT)
 	btn2.pressed.connect(func():
 		var bids := [{"player": 0, "amount": 0, "is_pass": true}]
-		if int(prompt["type"]) == CardDefs.AuctionType.DOUBLE:
-			gs.submit_double_open_bids(bids)
-		else:
-			gs.submit_open_bids(bids)
+		gs.submit_open_bids(bids)
 	, CONNECT_ONE_SHOT)
 
 func _setup_human_buyer_once_around(prompt: Dictionary) -> void:
@@ -296,12 +290,9 @@ func _ai_handle_buyer_prompt(prompt: Dictionary) -> void:
 	# AI作为买家（seller为你）
 	var t := int(prompt["type"])
 	match t:
-		CardDefs.AuctionType.OPEN, CardDefs.AuctionType.DOUBLE:
+		CardDefs.AuctionType.OPEN:
 			var bids: Array = ai.make_open_bids(prompt)
-			if t == CardDefs.AuctionType.DOUBLE:
-				gs.submit_double_open_bids(bids)
-			else:
-				gs.submit_open_bids(bids)
+			gs.submit_open_bids(bids)
 		CardDefs.AuctionType.ONCE_AROUND:
 			gs.submit_once_around(ai.make_once_around(prompt))
 		CardDefs.AuctionType.SEALED:

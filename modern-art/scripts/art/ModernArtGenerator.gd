@@ -3,6 +3,18 @@ extends RefCounted
 const CardDefs := preload("res://scripts/core/CardDefs.gd")
 
 var _cache: Dictionary = {} # card_id(int) -> Texture2D
+var _artist_base: Dictionary = {} # artist(int) -> Texture2D (来自 assets/cards 的五张画作)
+
+const _ART_FILES_BY_ARTIST := {
+	CardDefs.Artist.CARVALHO: "res://assets/cards/八嘎呀路.png",
+	CardDefs.Artist.MARTINS: "res://assets/cards/哈基米.png",
+	CardDefs.Artist.MELIM: "res://assets/cards/巴巴博一.png",
+	CardDefs.Artist.SILVEIRA: "res://assets/cards/比比拉布.png",
+	CardDefs.Artist.THALER: "res://assets/cards/我的刀盾.png",
+}
+
+func _init() -> void:
+	_load_artist_base_textures()
 
 func get_face_texture(card: Dictionary) -> Texture2D:
 	var card_id: int = int(card.get("id", -1))
@@ -16,60 +28,71 @@ func get_face_texture(card: Dictionary) -> Texture2D:
 func _generate(card_id: int, artist: int) -> Texture2D:
 	var w: int = 96
 	var h: int = 128
-	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
-
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _seed_for(card_id, artist)
 
-	var base := _artist_base_color(artist)
-	img.fill(base)
+	var src_tex: Texture2D = null
+	if _artist_base.has(artist):
+		src_tex = _artist_base[artist]
 
-	# 轻微噪点底纹
-	for y in range(0, h, 2):
-		for x in range(0, w, 2):
-			var n: float = float(rng.randi_range(-12, 12)) / 255.0
-			var c := Color(
-				clamp(base.r + n, 0.0, 1.0),
-				clamp(base.g + n, 0.0, 1.0),
-				clamp(base.b + n, 0.0, 1.0),
-				1.0
-			)
-			_plot2x2(img, x, y, c)
+	if src_tex == null:
+		# 回退：纯色占位（理论上不会触发，只在缺图时用）
+		var fallback := Image.create(w, h, false, Image.FORMAT_RGBA8)
+		fallback.fill(Color(0.15, 0.15, 0.18, 1))
+		return ImageTexture.create_from_image(fallback)
 
-	# 抽象块
-	var blocks: int = rng.randi_range(6, 11)
-	for i in range(blocks):
-		var rw: int = rng.randi_range(10, 36)
-		var rh: int = rng.randi_range(10, 36)
-		var rx: int = rng.randi_range(4, w - rw - 4)
-		var ry: int = rng.randi_range(4, h - rh - 4)
-		var col := _random_accent(rng, artist)
-		_draw_rect(img, Rect2i(rx, ry, rw, rh), col, rng.randi_range(0, 1) == 1)
+	var src_img: Image = src_tex.get_image()
+	if src_img == null:
+		var fb2 := Image.create(w, h, false, Image.FORMAT_RGBA8)
+		fb2.fill(Color(0.15, 0.15, 0.18, 1))
+		return ImageTexture.create_from_image(fb2)
 
-	# 笔触线条
-	var strokes: int = rng.randi_range(8, 14)
-	for i in range(strokes):
-		var x0: int = rng.randi_range(0, w - 1)
-		var y0: int = rng.randi_range(0, h - 1)
-		var x1: int = rng.randi_range(0, w - 1)
-		var y1: int = rng.randi_range(0, h - 1)
-		var thick: int = rng.randi_range(1, 3)
-		var col2 := _random_accent(rng, artist)
-		_draw_line_thick(img, x0, y0, x1, y1, thick, col2)
+	# 1) Cover裁剪到目标比例（3:4），并做一点点随机偏移，让同一画作不同卡有变化
+	var target_ratio: float = float(w) / float(h) # 0.75
+	var sw: int = src_img.get_width()
+	var sh: int = src_img.get_height()
 
-	# 亮色圆点
-	var dots: int = rng.randi_range(10, 22)
-	for i in range(dots):
-		var dx: int = rng.randi_range(6, w - 7)
-		var dy: int = rng.randi_range(10, h - 10)
-		var rad: int = rng.randi_range(1, 3)
-		_draw_circle(img, dx, dy, rad, _random_accent(rng, artist))
+	var crop_w: int = sw
+	var crop_h: int = sh
+	if float(sw) / float(sh) > target_ratio:
+		crop_h = sh
+		crop_w = int(round(float(sh) * target_ratio))
+	else:
+		crop_w = sw
+		crop_h = int(round(float(sw) / target_ratio))
 
-	# 留出底部文字区（深色遮罩，便于读）
-	_draw_rect(img, Rect2i(0, h - 26, w, 26), Color(0, 0, 0, 0.35), false)
-	_draw_rect(img, Rect2i(0, 0, w, 18), Color(0, 0, 0, 0.25), false)
+	crop_w = clamp(crop_w, 1, sw)
+	crop_h = clamp(crop_h, 1, sh)
 
-	return ImageTexture.create_from_image(img)
+	var max_dx: int = max(0, sw - crop_w)
+	var max_dy: int = max(0, sh - crop_h)
+	var ox: int = int(round(float(max_dx) * (0.35 + float(rng.randi_range(-10, 10)) / 100.0)))
+	var oy: int = int(round(float(max_dy) * (0.35 + float(rng.randi_range(-10, 10)) / 100.0)))
+	ox = clamp(ox, 0, max_dx)
+	oy = clamp(oy, 0, max_dy)
+
+	var cropped := src_img.get_region(Rect2i(ox, oy, crop_w, crop_h))
+
+	# 2) 像素化：先缩到低分辨率，再用Nearest放大回目标尺寸
+	var low_w: int = 48
+	var low_h: int = 64
+	cropped.resize(low_w, low_h, Image.INTERPOLATE_NEAREST)
+	cropped.resize(w, h, Image.INTERPOLATE_NEAREST)
+
+	# 3) 顶底加轻微遮罩，便于读标题
+	_draw_rect(cropped, Rect2i(0, h - 26, w, 26), Color(0, 0, 0, 0.32), false)
+	_draw_rect(cropped, Rect2i(0, 0, w, 18), Color(0, 0, 0, 0.18), false)
+
+	return ImageTexture.create_from_image(cropped)
+
+func _load_artist_base_textures() -> void:
+	_artist_base.clear()
+	for a in _ART_FILES_BY_ARTIST.keys():
+		var p: String = String(_ART_FILES_BY_ARTIST[a])
+		if ResourceLoader.exists(p):
+			var t := load(p)
+			if t is Texture2D:
+				_artist_base[int(a)] = t
 
 func _seed_for(card_id: int, artist: int) -> int:
 	# 简单可重复的混合种子
@@ -77,32 +100,11 @@ func _seed_for(card_id: int, artist: int) -> int:
 	var b: int = (artist * 2654435761) & 0x7fffffff
 	return int((a ^ b) & 0x7fffffff)
 
-func _artist_base_color(artist: int) -> Color:
-	match artist:
-		CardDefs.Artist.CARVALHO: return Color(0.16, 0.16, 0.22, 1)
-		CardDefs.Artist.MARTINS: return Color(0.15, 0.20, 0.16, 1)
-		CardDefs.Artist.MELIM: return Color(0.20, 0.16, 0.16, 1)
-		CardDefs.Artist.SILVEIRA: return Color(0.17, 0.18, 0.14, 1)
-		CardDefs.Artist.THALER: return Color(0.14, 0.18, 0.22, 1)
-		_: return Color(0.16, 0.16, 0.20, 1)
+func _artist_base_color(_artist: int) -> Color:
+	return Color(0.15, 0.15, 0.18, 1)
 
-func _random_accent(rng: RandomNumberGenerator, artist: int) -> Color:
-	# 每位艺术家一组偏好色系
-	var palette: Array = []
-	match artist:
-		CardDefs.Artist.CARVALHO:
-			palette = [Color(0.95, 0.55, 0.25), Color(0.85, 0.85, 0.95), Color(0.35, 0.75, 0.90)]
-		CardDefs.Artist.MARTINS:
-			palette = [Color(0.35, 0.95, 0.65), Color(0.85, 0.95, 0.35), Color(0.20, 0.65, 0.40)]
-		CardDefs.Artist.MELIM:
-			palette = [Color(0.95, 0.35, 0.45), Color(0.95, 0.80, 0.30), Color(0.60, 0.25, 0.35)]
-		CardDefs.Artist.SILVEIRA:
-			palette = [Color(0.95, 0.95, 0.35), Color(0.45, 0.85, 0.95), Color(0.75, 0.55, 0.25)]
-		CardDefs.Artist.THALER:
-			palette = [Color(0.55, 0.55, 0.98), Color(0.90, 0.40, 0.90), Color(0.35, 0.85, 0.95)]
-		_:
-			palette = [Color(0.9, 0.9, 0.9), Color(0.3, 0.8, 0.9)]
-	return palette[rng.randi_range(0, palette.size() - 1)]
+func _random_accent(_rng: RandomNumberGenerator, _artist: int) -> Color:
+	return Color(0.85, 0.85, 0.85, 1)
 
 func _plot2x2(img: Image, x: int, y: int, col: Color) -> void:
 	_safe_set(img, x, y, col)

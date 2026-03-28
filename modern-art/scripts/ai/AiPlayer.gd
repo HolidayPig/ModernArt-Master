@@ -8,110 +8,99 @@ func _init() -> void:
 	_rng.randomize()
 
 func choose_card_index(hand: Array, snapshot: Dictionary) -> int:
-	# 基础策略：优先打出“双重拍卖”，其次打出当前本轮售出较少的艺术家（制造稀缺），否则随便
-	var sold: Dictionary = snapshot.get("sold_counts", {})
+	# 基础策略（3-5人通用）：优先打出非“加牌(=)”，其次倾向于桌面数量较少的艺术家
+	var table_counts: Array = snapshot.get("table_counts", [0, 0, 0, 0, 0])
 	var best_i: int = 0
 	var best_score: int = -999999
 	for i in range(hand.size()):
 		var c: Dictionary = hand[i]
-		var t := int(c["auction"])
-		var a := int(c["artist"])
+		var t: int = int(c.get("auction", 0))
+		var a: int = int(c.get("artist", 0))
 		var score: int = 0
-		if t == CardDefs.AuctionType.DOUBLE:
-			score += 100
-		score += (10 - int(sold.get(a, 0))) * 3
+		if t == CardDefs.AuctionType.EXTRA:
+			score -= 50
+		score += (10 - int(table_counts[a])) * 3
 		score += _rng.randi_range(0, 2)
 		if score > best_score:
 			best_score = score
 			best_i = i
 	return best_i
 
-func _estimate_card_value(prompt: Dictionary, artist: int) -> int:
-	# 非精确估值：依据本轮售出数量排序倾向 + 轮次加成
-	var round_index: int = int(prompt.get("round_index", 0))
-	var sold: Dictionary = prompt.get("sold_counts", {})
-	var count: int = int(sold.get(artist, 0))
-	var base: int = 18 + round_index * 8
-	# 越“热门”（售出多）越可能进前三，AI愿意更高出价
-	return base + count * 6
+func decide_open_bid(info: Dictionary, highest_bid: int) -> int:
+	var p: int = int(info.get("player", -1))
+	var cash_arr: Array = info.get("cash", [])
+	var my_cash: int = int(cash_arr[p])
+	var cards: Array = info.get("cards", [])
+	var v: int = _estimate_bundle_value(info, cards)
+	var min_bid: int = highest_bid + 1000
+	if my_cash < min_bid:
+		return 0
+	if v < min_bid:
+		return 0
+	var target: int = min(my_cash, v - 1000)
+	target = int(floor(float(target) / 1000.0) * 1000.0)
+	if target < min_bid:
+		target = min_bid
+	return target
 
-func make_open_bids(prompt: Dictionary) -> Array:
-	# 在2人局，卖家与买家一对一：AI决定“加价”或“放弃”
-	var seller: int = int(prompt["seller"])
-	var cash: Array = prompt.get("cash", [100, 100])
-	var my_cash: int = int(cash[1])
-	if seller != 0:
-		# AI为卖家时不会参与出价（引擎会忽略）
-		return [{"player": 0, "amount": 0, "is_pass": true}]
+func decide_once_bid(info: Dictionary) -> int:
+	var p: int = int(info.get("player", -1))
+	var cash_arr: Array = info.get("cash", [])
+	var my_cash: int = int(cash_arr[p])
+	var cards: Array = info.get("cards", [])
+	var v: int = _estimate_bundle_value(info, cards)
+	var bid: int = min(my_cash, v - 2000)
+	bid = int(floor(float(bid) / 1000.0) * 1000.0)
+	return max(bid, 0)
 
-	var cards: Array = prompt["cards"]
-	var v: int = 0
+func decide_sealed_bid(info: Dictionary) -> int:
+	var p: int = int(info.get("player", -1))
+	var cash_arr: Array = info.get("cash", [])
+	var my_cash: int = int(cash_arr[p])
+	var cards: Array = info.get("cards", [])
+	var v: int = _estimate_bundle_value(info, cards)
+	var bid: int = min(my_cash, v - int(_rng.randi_range(1000, 6000)))
+	bid = int(floor(float(bid) / 1000.0) * 1000.0)
+	return max(bid, 0)
+
+func decide_fixed_price(info: Dictionary) -> int:
+	var p: int = int(info.get("player", -1))
+	var cash_arr: Array = info.get("cash", [])
+	var my_cash: int = int(cash_arr[p])
+	var cards: Array = info.get("cards", [])
+	var v: int = _estimate_bundle_value(info, cards)
+	var price: int = min(my_cash, v - 3000)
+	price = int(floor(float(price) / 1000.0) * 1000.0)
+	return max(price, 0)
+
+func decide_fixed_accept(price: int, info: Dictionary) -> bool:
+	var p: int = int(info.get("player", -1))
+	var cash_arr: Array = info.get("cash", [])
+	var my_cash: int = int(cash_arr[p])
+	if price > my_cash:
+		return false
+	var cards: Array = info.get("cards", [])
+	var v: int = _estimate_bundle_value(info, cards)
+	return price <= v
+
+func decide_extra_follow(artist: int, candidates: Array[int], snap: Dictionary) -> int:
+	# 返回 candidates 内的下标；-1表示不补牌
+	var artist_values: Array = snap.get("artist_values", [0, 0, 0, 0, 0])
+	var v: int = int(artist_values[artist])
+	if candidates.is_empty():
+		return -1
+	if v >= 20000:
+		return 0
+	return -1 if _rng.randi_range(0, 99) < 70 else 0
+
+func _estimate_bundle_value(info: Dictionary, cards: Array) -> int:
+	var artist_values: Array = info.get("artist_values", [0, 0, 0, 0, 0])
+	var table_counts: Array = info.get("table_counts", [0, 0, 0, 0, 0])
+	var value: int = 0
 	for c in cards:
-		v += _estimate_card_value(prompt, int(c["artist"]))
-
-	var bid: int = int(min(my_cash, v))
-	if bid <= 0:
-		return [{"player": 1, "amount": 0, "is_pass": true}]
-
-	# 少量随机让AI不那么“机械”
-	var jitter: int = _rng.randi_range(-5, 5)
-	bid = clamp(bid + jitter, 0, my_cash)
-	if bid < 6:
-		return [{"player": 1, "amount": 0, "is_pass": true}]
-	return [{"player": 1, "amount": bid, "is_pass": false}]
-
-func make_once_around(prompt: Dictionary) -> Array:
-	# 只给一次报价或放弃
-	var seller: int = int(prompt["seller"])
-	var cash: Array = prompt.get("cash", [100, 100])
-	var my_cash: int = int(cash[1])
-	if seller != 0:
-		return [{"player": 0, "amount": 0, "is_pass": true}]
-
-	var cards: Array = prompt["cards"]
-	var v: int = 0
-	for c in cards:
-		v += _estimate_card_value(prompt, int(c["artist"]))
-
-	var offer: int = int(clamp(v - 5, 0, my_cash))
-	if offer < 5:
-		return [{"player": 1, "amount": 0, "is_pass": true}]
-	return [{"player": 1, "amount": offer, "is_pass": false}]
-
-func choose_fixed_price(prompt: Dictionary) -> int:
-	# AI作为卖家设定价格：略低于估值以提高成交概率
-	var cards: Array = prompt["cards"]
-	var v: int = 0
-	for c in cards:
-		v += _estimate_card_value(prompt, int(c["artist"]))
-	return max(0, v - 8)
-
-func respond_fixed_price(price: int, prompt: Dictionary) -> Array:
-	# 返回按顺序的accept列表（2人局只有买家自己）
-	var seller: int = int(prompt["seller"])
-	var cash: Array = prompt.get("cash", [100, 100])
-	var my_cash: int = int(cash[1])
-	if seller != 0:
-		# AI不是买家时，这个函数可能不被调用；给个兜底
-		return [{"player": 0, "accept": false}]
-
-	var cards: Array = prompt["cards"]
-	var v: int = 0
-	for c in cards:
-		v += _estimate_card_value(prompt, int(c["artist"]))
-	var accept: bool = price <= int(min(my_cash, v))
-	return [{"player": 1, "accept": accept}]
-
-func make_sealed_bid(prompt: Dictionary) -> Array:
-	var seller: int = int(prompt["seller"])
-	var cash: Array = prompt.get("cash", [100, 100])
-	var my_cash: int = int(cash[1])
-	if seller != 0:
-		return [{"player": 0, "amount": 0}]
-
-	var cards: Array = prompt["cards"]
-	var v: int = 0
-	for c in cards:
-		v += _estimate_card_value(prompt, int(c["artist"]))
-	var bid: int = int(clamp(v - 3, 0, my_cash))
-	return [{"player": 1, "amount": bid}]
+		var a: int = int(c.get("artist", 0))
+		var base: int = int(artist_values[a])
+		# 简单热点加成：桌面越多越可能进入前三
+		var hot: int = int(table_counts[a]) * 2000
+		value += base + 15000 + hot
+	return value
