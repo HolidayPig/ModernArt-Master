@@ -6,10 +6,10 @@
 script = ExtResource("1_u0lq8")
 
 [node name="Frame" type="Sprite2D" parent="."]
-texture_filter = 0
+texture_filter = 2
 
 [node name="Face" type="Sprite2D" parent="."]
-texture_filter = 0
+texture_filter = 2
 position = Vector2(0, 0)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]

@@ -23,11 +23,17 @@ const PlayerPanelScene: PackedScene = preload("res://scenes/ui/PlayerPanel.tscn"
 @onready var round_label: Label = $Hud/HudRoot/LayoutMargin/LayoutVBox/TopBar/TopHBox/RoundLabel
 @onready var turn_label: Label = $Hud/HudRoot/LayoutMargin/LayoutVBox/TopBar/TopHBox/TurnLabel
 @onready var money_label: Label = $Hud/HudRoot/LayoutMargin/LayoutVBox/TopBar/TopHBox/MoneyLabel
-@onready var auction_info: RichTextLabel = $Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/AuctionCenterPanel/AuctionVBox/AuctionInfo
+@onready var auction_info: RichTextLabel = $Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/AuctionWrap/AuctionCenterPanel/AuctionVBox/AuctionInfo
 @onready var btn1: Button = $Hud/HudRoot/HandActionDock/DockMargin/AuctionButtons/Btn1
 @onready var btn2: Button = $Hud/HudRoot/HandActionDock/DockMargin/AuctionButtons/Btn2
 @onready var btn3: Button = $Hud/HudRoot/HandActionDock/DockMargin/AuctionButtons/Btn3
 @onready var toast: Label = $Hud/HudRoot/Toast
+
+@onready var top_bar: Control = $Hud/HudRoot/LayoutMargin/LayoutVBox/TopBar
+@onready var left_column: Control = $Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/LeftColumn
+@onready var right_column: Control = $Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/RightColumn
+@onready var auction_panel: Control = $Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/AuctionWrap/AuctionCenterPanel
+@onready var hand_action_dock: Control = $Hud/HudRoot/HandActionDock
 
 @onready var left_players: VBoxContainer = $Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/LeftColumn/LeftPlayers
 @onready var right_players: VBoxContainer = $Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/RightColumn/RightPlayers
@@ -47,6 +53,8 @@ var _back_tex: Texture2D
 var _art: RefCounted
 
 var _player_panels: Array = [] # index=player_id -> PlayerPanel(Control)
+var _hovered_card_id: int = -1
+var _owned_by_player: Array = [] # Array[Array[int]]（仅表现层：用于计数排布）
 
 func _ready() -> void:
 	_apply_chinese_font_if_available()
@@ -158,6 +166,7 @@ func _init_game() -> void:
 	gs.money_changed.connect(_on_money_changed)
 
 	_init_player_panels()
+	_reset_owned_visuals()
 	gs.new_game()
 
 func _init_background() -> void:
@@ -168,12 +177,12 @@ func _init_card_textures() -> void:
 	# 先用下载素材的卡牌底图做框（后续会换成真正的卡框+卡面）
 	_frame_tex = AssetResolver.load_texture_or_placeholder(
 		"res://assets/downloaded/cards/color_empty.png",
-		Vector2i(128, 180),
+		Vector2i(144, 256),
 		Color(0.16, 0.16, 0.20, 1)
 	)
 	_back_tex = AssetResolver.load_texture_or_placeholder(
 		"res://assets/downloaded/cards/color_back.png",
-		Vector2i(128, 180),
+		Vector2i(144, 256),
 		Color(0.10, 0.10, 0.12, 1)
 	)
 
@@ -196,9 +205,7 @@ func _make_table_texture(size: Vector2i) -> Texture2D:
 				if x + 1 < size.x:
 					img.set_pixel(x + 1, y + 1, c)
 
-	# 中间铺一块“拍卖桌面”（位置与 AuctionAnchor 区域对齐，避免压到上方HUD）
-	_draw_rect(img, Rect2i(360, 260, 560, 340), Color(0.12, 0.13, 0.18, 1))
-	_draw_rect_outline(img, Rect2i(360, 260, 560, 340), Color(0.22, 0.24, 0.32, 1))
+	# 不绘制中央方框，保持背景干净
 
 	return ImageTexture.create_from_image(img)
 
@@ -310,7 +317,7 @@ func _layout_hand_fan() -> void:
 		var p := Vector2(x, y)
 
 		actor.set_base_transform(p, rot)
-		actor.z_index = i
+		actor.set_base_z(i)
 
 func _on_card_clicked(card_id: int) -> void:
 	# 仅在轮到玩家且等待出牌时响应
@@ -332,39 +339,132 @@ func _on_card_clicked(card_id: int) -> void:
 
 	# 播放出牌基础动效：飞到拍卖锚点
 	if _hand_by_id.has(card_id):
+		_set_hover_card(-1)
 		var actor = _hand_by_id[card_id]
 		_hand_by_id.erase(card_id) # 防止后续渲染复用已释放实例
 		_in_flight[card_id] = actor
-		actor.play_to(auction_anchor.position, 0.0, 0.18)
+		actor.set_hovered(false)
+		actor.play_to(_auction_slot_pos(0, 1), 0.0, 0.22, 54.0)
 
 	gs.play_card(0, idx)
 
-func _on_card_played(info: Dictionary) -> void:
-	# AI出牌时创建临时卡牌实体从牌库位飞到拍卖位
-	var p: int = int(info.get("player", -1))
-	if p == 0:
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		var mp: Vector2 = get_viewport().get_mouse_position()
+		var id: int = _pick_top_hand_card_id(mp)
+		if id != _hovered_card_id:
+			_set_hover_card(id)
+
+func _pick_top_hand_card_id(mouse_pos: Vector2) -> int:
+	# 从最上层往下找（手牌扇形 z_index 与顺序一致）
+	for i in range(_hand_order.size() - 1, -1, -1):
+		var c: Dictionary = _hand_order[i]
+		var id: int = int(c.get("id", -1))
+		if not _hand_by_id.has(id):
+			continue
+		var actor: Variant = _hand_by_id[id]
+		if actor == null or not is_instance_valid(actor):
+			continue
+		var n2d := actor as Node2D
+		if n2d != null and _point_hits_actor(mouse_pos, n2d):
+			return id
+	return -1
+
+func _point_hits_actor(global_point: Vector2, actor: Node2D) -> bool:
+	var inv: Transform2D = actor.get_global_transform().affine_inverse()
+	var lp: Vector2 = inv * global_point
+	var sz: Vector2 = Vector2(160, 224)
+	var v: Variant = actor.get("card_size")
+	if v is Vector2:
+		sz = v
+	return abs(lp.x) <= sz.x * 0.5 and abs(lp.y) <= sz.y * 0.5
+
+func _set_hover_card(id: int) -> void:
+	if _hovered_card_id == id:
 		return
-	var cards: Array = info.get("cards", [])
-	if cards.is_empty():
-		return
-	var c0: Dictionary = cards[0]
-	var id0: int = int(c0.get("id", -1))
+	if _hovered_card_id != -1 and _hand_by_id.has(_hovered_card_id):
+		var prev: Variant = _hand_by_id[_hovered_card_id]
+		if prev != null and is_instance_valid(prev):
+			prev.set_hovered(false)
+	_hovered_card_id = id
+	if _hovered_card_id != -1 and _hand_by_id.has(_hovered_card_id):
+		var cur: Variant = _hand_by_id[_hovered_card_id]
+		if cur != null and is_instance_valid(cur):
+			cur.set_hovered(true)
+
+func _get_or_create_actor_for_card(card_id: int, card: Dictionary) -> Node2D:
+	# 已在飞行/桌面上的直接复用
+	if _in_flight.has(card_id):
+		var ex: Variant = _in_flight[card_id]
+		return ex as Node2D
+
+	# 若仍在手牌（例如加牌补牌从手牌抽出时），从手牌拿出来复用
+	if _hand_by_id.has(card_id):
+		var ex2: Variant = _hand_by_id[card_id]
+		_hand_by_id.erase(card_id)
+		_in_flight[card_id] = ex2
+		return ex2 as Node2D
 
 	var actor := CardActorScene.instantiate()
 	cards_layer.add_child(actor)
-	_in_flight[id0] = actor
+	_in_flight[card_id] = actor
 
-	actor.set_card(c0)
-	actor.set_textures(_frame_tex, _art.get_face_texture(c0))
+	actor.set_card(card)
+	actor.set_textures(_frame_tex, _art.get_face_texture(card))
 	actor.set_font_size(14)
-	actor.set_subtitle(CardDefs.auction_display_name(int(c0.get("auction", 0))))
+	actor.set_subtitle(CardDefs.auction_display_name(int(card.get("auction", 0))))
 	actor.set_base_transform(deck_anchor.position, 0.0)
-	actor.play_to(auction_anchor.position, 0.0, 0.22)
+	return actor as Node2D
+
+func _auction_safe_rect() -> Rect2:
+	# 使用UI面板的全局矩形推导“桌面安全区”（避免与信息面板/操作条/侧栏冲突）
+	var vp: Vector2 = get_viewport_rect().size
+	var lrect: Rect2 = left_column.get_global_rect()
+	var rrect: Rect2 = right_column.get_global_rect()
+	var arect: Rect2 = auction_panel.get_global_rect()
+	var dock: Rect2 = hand_action_dock.get_global_rect()
+
+	var left: float = lrect.end.x + 24.0
+	var right: float = rrect.position.x - 24.0
+	var top: float = max(arect.end.y + 18.0, top_bar.get_global_rect().end.y + 18.0)
+	var bottom_hint: float = min(dock.position.y, vp.y - 220.0) - 18.0
+	var bottom: float = max(bottom_hint, top + 160.0)
+
+	# 兜底：如果空间过小，退回到 AuctionAnchor 附近
+	if right - left < 260.0 or bottom - top < 180.0:
+		return Rect2(auction_anchor.position - Vector2(220, 120), Vector2(440, 240))
+	return Rect2(Vector2(left, top), Vector2(right - left, bottom - top))
+
+func _auction_slot_pos(slot_index: int, total: int) -> Vector2:
+	var safe: Rect2 = _auction_safe_rect()
+	var center: Vector2 = safe.position + safe.size * 0.5
+	if total <= 1:
+		return center
+	var dx: float = 92.0
+	if total == 2:
+		return center + Vector2((-dx if slot_index == 0 else dx), 0)
+	# 多于2张则按一排摊开
+	var start_x: float = center.x - dx * float(total - 1) * 0.5
+	return Vector2(start_x + dx * float(slot_index), center.y)
+
+func _on_card_played(info: Dictionary) -> void:
+	var cards: Array = info.get("cards", [])
+	if cards.is_empty():
+		return
+	var total: int = cards.size()
+	for i in range(total):
+		var c: Dictionary = cards[i]
+		var id0: int = int(c.get("id", -1))
+		var actor: Node2D = _get_or_create_actor_for_card(id0, c)
+		actor.set_hovered(false)
+		actor.play_to(_auction_slot_pos(i, total), 0.0, 0.24, 46.0)
 
 func _on_auction_resolved(info: Dictionary) -> void:
 	var winner: int = int(info.get("winner", -1))
 	var cards: Array = info.get("cards", [])
-	var target: Vector2 = _collection_target_for_player(winner)
+	if winner < 0:
+		return
+	_ensure_owned_arrays()
 
 	for c in cards:
 		var idc: int = int(c.get("id", -1))
@@ -377,18 +477,30 @@ func _on_auction_resolved(info: Dictionary) -> void:
 		if actor == null:
 			continue
 
-		var rot: float = 0.10 if winner in [0, 3, 4] else -0.10
-		actor.play_to(target, rot, 0.26)
+		# HUD：把缩略图放进赢家信息框（显示在上层）
+		var idx: int = _owned_by_player[winner].size()
+		_owned_by_player[winner].append(idc)
+		var panel: Variant = _player_panels[winner]
+		if panel != null and is_instance_valid(panel):
+			panel.add_mini_card(_art.get_face_texture(c))
 
+		# 世界层：牌飞到赢家附近后淡出（不再长期堆在桌面中间）
+		var target: Vector2 = _collection_target_for_player(winner) + Vector2(float(idx % 4) * 16.0, float(idx / 4) * 12.0)
+		var rot: float = 0.06 if winner in [0, 3, 4] else -0.06
+		if actor is Area2D:
+			(actor as Area2D).input_pickable = false
+		actor.set_hovered(false)
+		actor.play_to(target, rot, 0.22, 18.0, 0.70)
 		var tw := create_tween()
-		tw.tween_interval(0.28)
-		tw.tween_property(actor, "modulate:a", 0.0, 0.20)
+		tw.tween_interval(0.24)
+		tw.tween_property(actor, "modulate:a", 0.0, 0.18)
 		tw.tween_callback(func():
-			if _in_flight.has(idc):
-				_in_flight.erase(idc)
-			if actor != null:
-				actor.queue_free()
+			if actor != null and is_instance_valid(actor):
+				(actor as Node).queue_free()
 		)
+
+		if _in_flight.has(idc):
+			_in_flight.erase(idc)
 
 func _collection_target_for_player(p: int) -> Vector2:
 	match p:
@@ -404,6 +516,36 @@ func _collection_target_for_player(p: int) -> Vector2:
 			return ai4_collection_anchor.position
 		_:
 			return ai_collection_anchor.position
+
+func _ensure_owned_arrays() -> void:
+	if _owned_by_player.size() == 5:
+		return
+	_owned_by_player.clear()
+	for _i in range(5):
+		_owned_by_player.append([])
+
+func _reset_owned_visuals() -> void:
+	_ensure_owned_arrays()
+	for p in range(_owned_by_player.size()):
+		_owned_by_player[p].clear()
+		var panel: Variant = _player_panels[p]
+		if panel != null and is_instance_valid(panel):
+			panel.clear_mini_cards()
+
+func _clear_owned_visuals() -> void:
+	if _owned_by_player.size() == 5:
+		for p in range(_owned_by_player.size()):
+			_owned_by_player[p].clear()
+			var panel: Variant = _player_panels[p]
+			if panel != null and is_instance_valid(panel):
+				panel.clear_mini_cards()
+
+	# 兜底：清理仍在“桌面/飞行”但未被归档的牌
+	for k2 in _in_flight.keys():
+		var a2: Variant = _in_flight[k2]
+		if a2 != null and is_instance_valid(a2):
+			(a2 as Node).queue_free()
+	_in_flight.clear()
 
 func _on_money_changed(info: Dictionary) -> void:
 	var p: int = int(info.get("player", -1))
@@ -634,6 +776,7 @@ func _prompt_number(title: String, min_v: int, max_v: int, default_v: int, cb: C
 func _on_round_scored(r: Dictionary) -> void:
 	var payouts: Array = r["payouts"]
 	_show_toast("本轮收入：你 +%d" % int(payouts[0]))
+	_clear_owned_visuals()
 
 func _on_game_ended(r: Dictionary) -> void:
 	_show_toast("游戏结束！胜者：" + String(r["winner_name"]))

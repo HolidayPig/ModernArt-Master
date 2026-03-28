@@ -83,7 +83,7 @@ theme_override_constants/separation = 12
 mouse_filter = 2
 
 [node name="LeftColumn" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox"]
-custom_minimum_size = Vector2(240, 0)
+custom_minimum_size = Vector2(208, 0)
 size_flags_horizontal = 3
 theme_override_constants/separation = 10
 mouse_filter = 2
@@ -99,21 +99,26 @@ size_flags_horizontal = 3
 theme_override_constants/separation = 10
 mouse_filter = 2
 
-[node name="AuctionCenterPanel" type="PanelContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn"]
-custom_minimum_size = Vector2(520, 220)
+[node name="AuctionWrap" type="CenterContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn"]
 size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="AuctionVBox" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/AuctionCenterPanel"]
+[node name="AuctionCenterPanel" type="PanelContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/AuctionWrap"]
+custom_minimum_size = Vector2(440, 180)
+mouse_filter = 2
+
+[node name="AuctionVBox" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/AuctionWrap/AuctionCenterPanel"]
 theme_override_constants/separation = 8
 
-[node name="AuctionInfo" type="RichTextLabel" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/AuctionCenterPanel/AuctionVBox"]
+[node name="AuctionInfo" type="RichTextLabel" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/AuctionWrap/AuctionCenterPanel/AuctionVBox"]
 bbcode_enabled = true
-fit_content = true
+fit_content = false
+custom_minimum_size = Vector2(0, 120)
+scroll_active = false
 text = "[b]等待出牌…[/b]"
 
 [node name="RightColumn" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox"]
-custom_minimum_size = Vector2(240, 0)
+custom_minimum_size = Vector2(208, 0)
 size_flags_horizontal = 3
 theme_override_constants/separation = 10
 mouse_filter = 2

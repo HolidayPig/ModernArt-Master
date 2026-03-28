@@ -26,8 +26,8 @@ func get_face_texture(card: Dictionary) -> Texture2D:
 	return tex
 
 func _generate(card_id: int, artist: int) -> Texture2D:
-	var w: int = 96
-	var h: int = 128
+	var w: int = 144
+	var h: int = 256
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _seed_for(card_id, artist)
 
@@ -46,44 +46,33 @@ func _generate(card_id: int, artist: int) -> Texture2D:
 		var fb2 := Image.create(w, h, false, Image.FORMAT_RGBA8)
 		fb2.fill(Color(0.15, 0.15, 0.18, 1))
 		return ImageTexture.create_from_image(fb2)
+	# 不同源图可能是 RGB/RGBA；blit_rect 需要格式一致，否则会出现“只有部分图能显示”
+	if src_img.get_format() != Image.FORMAT_RGBA8:
+		src_img.convert(Image.FORMAT_RGBA8)
 
-	# 1) Cover裁剪到目标比例（3:4），并做一点点随机偏移，让同一画作不同卡有变化
-	var target_ratio: float = float(w) / float(h) # 0.75
+	# 1) 按 9:16 画布“完整显示原图”（不裁切）：contain 缩放 + 居中
 	var sw: int = src_img.get_width()
 	var sh: int = src_img.get_height()
+	var scale: float = min(float(w) / float(max(1, sw)), float(h) / float(max(1, sh)))
+	var nw: int = max(1, int(round(float(sw) * scale)))
+	var nh: int = max(1, int(round(float(sh) * scale)))
 
-	var crop_w: int = sw
-	var crop_h: int = sh
-	if float(sw) / float(sh) > target_ratio:
-		crop_h = sh
-		crop_w = int(round(float(sh) * target_ratio))
-	else:
-		crop_w = sw
-		crop_h = int(round(float(sw) / target_ratio))
+	var out := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	out.fill(Color(0.06, 0.07, 0.09, 1))
 
-	crop_w = clamp(crop_w, 1, sw)
-	crop_h = clamp(crop_h, 1, sh)
+	var scaled: Image = src_img.duplicate()
+	if scaled.get_format() != Image.FORMAT_RGBA8:
+		scaled.convert(Image.FORMAT_RGBA8)
+	scaled.resize(nw, nh, Image.INTERPOLATE_LANCZOS)
+	var dx: int = int((w - nw) * 0.5)
+	var dy: int = int((h - nh) * 0.5)
+	out.blit_rect(scaled, Rect2i(0, 0, nw, nh), Vector2i(dx, dy))
 
-	var max_dx: int = max(0, sw - crop_w)
-	var max_dy: int = max(0, sh - crop_h)
-	var ox: int = int(round(float(max_dx) * (0.35 + float(rng.randi_range(-10, 10)) / 100.0)))
-	var oy: int = int(round(float(max_dy) * (0.35 + float(rng.randi_range(-10, 10)) / 100.0)))
-	ox = clamp(ox, 0, max_dx)
-	oy = clamp(oy, 0, max_dy)
+	# 2) 顶底加轻微遮罩，便于读标题
+	_draw_rect(out, Rect2i(0, h - 30, w, 30), Color(0, 0, 0, 0.26), false)
+	_draw_rect(out, Rect2i(0, 0, w, 22), Color(0, 0, 0, 0.18), false)
 
-	var cropped := src_img.get_region(Rect2i(ox, oy, crop_w, crop_h))
-
-	# 2) 像素化：先缩到低分辨率，再用Nearest放大回目标尺寸
-	var low_w: int = 48
-	var low_h: int = 64
-	cropped.resize(low_w, low_h, Image.INTERPOLATE_NEAREST)
-	cropped.resize(w, h, Image.INTERPOLATE_NEAREST)
-
-	# 3) 顶底加轻微遮罩，便于读标题
-	_draw_rect(cropped, Rect2i(0, h - 26, w, 26), Color(0, 0, 0, 0.32), false)
-	_draw_rect(cropped, Rect2i(0, 0, w, 18), Color(0, 0, 0, 0.18), false)
-
-	return ImageTexture.create_from_image(cropped)
+	return ImageTexture.create_from_image(out)
 
 func _load_artist_base_textures() -> void:
 	_artist_base.clear()

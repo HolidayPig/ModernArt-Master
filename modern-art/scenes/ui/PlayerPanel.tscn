@@ -3,15 +3,27 @@
 [ext_resource type="Script" path="res://scripts/ui/PlayerPanel.gd" id="1_8nq2h"]
 
 [node name="PlayerPanel" type="PanelContainer"]
-custom_minimum_size = Vector2(240, 96)
+custom_minimum_size = Vector2(200, 72)
 mouse_filter = 2
 script = ExtResource("1_8nq2h")
 
+[node name="MiniCards" type="Control" parent="."]
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -70.0
+offset_top = 0.0
+offset_right = -6.0
+offset_bottom = 0.0
+mouse_filter = 2
+clip_contents = true
+
 [node name="Margin" type="MarginContainer" parent="."]
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 6
 mouse_filter = 2
 
 [node name="VBox" type="VBoxContainer" parent="Margin"]
@@ -24,6 +36,7 @@ mouse_filter = 2
 
 [node name="NameLabel" type="Label" parent="Margin/VBox/NameRow"]
 text = "玩家"
+theme_override_font_sizes/font_size = 14
 
 [node name="Spacer" type="Control" parent="Margin/VBox/NameRow"]
 size_flags_horizontal = 3
@@ -32,10 +45,22 @@ size_flags_horizontal = 3
 text = "行动中"
 visible = false
 theme_override_colors/font_color = Color(0.46, 0.92, 0.74, 1)
+theme_override_font_sizes/font_size = 13
 
-[node name="CashLabel" type="Label" parent="Margin/VBox"]
-text = "现金：0"
+[node name="RightReserveName" type="Control" parent="Margin/VBox/NameRow"]
+custom_minimum_size = Vector2(70, 0)
 
-[node name="HandLabel" type="Label" parent="Margin/VBox"]
-text = "手牌：0"
+[node name="InfoRow" type="HBoxContainer" parent="Margin/VBox"]
+theme_override_constants/separation = 6
+mouse_filter = 2
+
+[node name="InfoLabel" type="Label" parent="Margin/VBox/InfoRow"]
+text = "现¥0  牌0"
+theme_override_font_sizes/font_size = 13
+
+[node name="Spacer2" type="Control" parent="Margin/VBox/InfoRow"]
+size_flags_horizontal = 3
+
+[node name="RightReserve" type="Control" parent="Margin/VBox/InfoRow"]
+custom_minimum_size = Vector2(70, 0)
 

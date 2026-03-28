@@ -74,7 +74,7 @@ static func build_standard_deck() -> Array[Dictionary]:
 			else:
 				var cycle := [AuctionType.OPEN, AuctionType.ONCE_AROUND, AuctionType.SEALED, AuctionType.FIXED_PRICE]
 				auction = int(cycle[i % cycle.size()])
-			var title := "%s·作品%02d" % [artist_display_name(artist), i + 1]
+			var title := artist_display_name(artist)
 			deck.append(make_card(next_id, artist, auction, title))
 			next_id += 1
 	return deck
