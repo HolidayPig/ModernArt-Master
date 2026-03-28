@@ -10,7 +10,7 @@
 在 PowerShell 中进入项目目录后执行：
 
 ```powershell
-cd "e:\AI\ModernArt-Master\modern-art"
+cd "e:\AI\ModernArt-Master"
 PowerShell -ExecutionPolicy Bypass -File ".\tools\download_assets.ps1"
 ```
 
@@ -19,7 +19,7 @@ PowerShell -ExecutionPolicy Bypass -File ".\tools\download_assets.ps1"
 - `assets/fonts/NotoSansCJKsc-Regular.otf`：中文字体（用于确保中文可显示）
 
 ## 启动游戏
-用 Godot 打开 `modern-art/project.godot`，点击运行（F5）。
+用 Godot 打开 `project.godot`，点击运行（F5）。
 
 ## 当前玩法（首版）
 - **模式**：3-5人（默认5人：你 + 4名电脑）本机对战
