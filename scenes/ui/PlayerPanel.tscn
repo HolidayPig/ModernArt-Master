@@ -3,31 +3,50 @@
 [ext_resource type="Script" path="res://scripts/ui/PlayerPanel.gd" id="1_8nq2h"]
 
 [node name="PlayerPanel" type="PanelContainer"]
-custom_minimum_size = Vector2(200, 72)
+custom_minimum_size = Vector2(224, 92)
 mouse_filter = 2
 script = ExtResource("1_8nq2h")
+
+[node name="Accent" type="ColorRect" parent="."]
+anchor_right = 1.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 4.0
+mouse_filter = 2
+color = Color(0.86, 0.69, 0.34, 1)
+
+[node name="Glow" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 1.0
+offset_top = 1.0
+offset_right = -1.0
+offset_bottom = -1.0
+mouse_filter = 2
+color = Color(1, 1, 1, 0.03)
 
 [node name="MiniCards" type="Control" parent="."]
 anchor_left = 1.0
 anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -70.0
-offset_top = 0.0
-offset_right = -6.0
-offset_bottom = 0.0
+offset_left = -92.0
+offset_top = 8.0
+offset_right = -10.0
+offset_bottom = -8.0
 mouse_filter = 2
 clip_contents = true
 
 [node name="Margin" type="MarginContainer" parent="."]
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
 mouse_filter = 2
 
 [node name="VBox" type="VBoxContainer" parent="Margin"]
-theme_override_constants/separation = 4
+theme_override_constants/separation = 6
 mouse_filter = 2
 
 [node name="NameRow" type="HBoxContainer" parent="Margin/VBox"]
@@ -36,7 +55,7 @@ mouse_filter = 2
 
 [node name="NameLabel" type="Label" parent="Margin/VBox/NameRow"]
 text = "玩家"
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 15
 
 [node name="Spacer" type="Control" parent="Margin/VBox/NameRow"]
 size_flags_horizontal = 3
@@ -45,10 +64,10 @@ size_flags_horizontal = 3
 text = "行动中"
 visible = false
 theme_override_colors/font_color = Color(0.46, 0.92, 0.74, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 11
 
 [node name="RightReserveName" type="Control" parent="Margin/VBox/NameRow"]
-custom_minimum_size = Vector2(70, 0)
+custom_minimum_size = Vector2(82, 0)
 
 [node name="InfoRow" type="HBoxContainer" parent="Margin/VBox"]
 theme_override_constants/separation = 6
@@ -62,5 +81,4 @@ theme_override_font_sizes/font_size = 13
 size_flags_horizontal = 3
 
 [node name="RightReserve" type="Control" parent="Margin/VBox/InfoRow"]
-custom_minimum_size = Vector2(70, 0)
-
+custom_minimum_size = Vector2(82, 0)

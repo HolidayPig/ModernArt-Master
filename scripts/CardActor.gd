@@ -3,7 +3,7 @@ extends Area2D
 signal clicked(card_id: int)
 signal hover_changed(card_id: int, is_hover: bool)
 
-@export var card_size: Vector2 = Vector2(144, 256)
+@export var card_size: Vector2 = Vector2(116, 206)
 
 @onready var frame: Sprite2D = $Frame
 @onready var face: Sprite2D = $Face
@@ -189,4 +189,3 @@ func _kill_tween() -> void:
 	if _tween != null and _tween.is_valid():
 		_tween.kill()
 	_tween = null
-

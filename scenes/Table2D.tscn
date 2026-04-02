@@ -60,10 +60,20 @@ theme_override_constants/separation = 12
 mouse_filter = 2
 
 [node name="TopBar" type="PanelContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox"]
+custom_minimum_size = Vector2(0, 60)
 mouse_filter = 2
 
 [node name="TopHBox" type="HBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopBar"]
-theme_override_constants/separation = 12
+theme_override_constants/separation = 14
+
+[node name="BrandVBox" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopBar/TopHBox"]
+theme_override_constants/separation = 0
+
+[node name="BrandEyebrow" type="Label" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopBar/TopHBox/BrandVBox"]
+text = "CURATED AUCTION TABLE"
+
+[node name="BrandTitle" type="Label" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopBar/TopHBox/BrandVBox"]
+text = "Modern Art"
 
 [node name="RoundLabel" type="Label" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopBar/TopHBox"]
 text = "第1轮 / 共4轮"
@@ -77,16 +87,67 @@ size_flags_horizontal = 3
 [node name="MoneyLabel" type="Label" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopBar/TopHBox"]
 text = "现金：你 100｜电脑 100"
 
+[node name="TopSummaryRow" type="HBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox"]
+theme_override_constants/separation = 12
+mouse_filter = 2
+
+[node name="MarketPanel" type="PanelContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopSummaryRow"]
+custom_minimum_size = Vector2(0, 136)
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="MarketVBox" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopSummaryRow/MarketPanel"]
+theme_override_constants/separation = 3
+size_flags_vertical = 3
+
+[node name="MarketTitle" type="Label" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopSummaryRow/MarketPanel/MarketVBox"]
+text = "市场走势"
+
+[node name="MarketInfo" type="RichTextLabel" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopSummaryRow/MarketPanel/MarketVBox"]
+bbcode_enabled = true
+fit_content = false
+custom_minimum_size = Vector2(0, 104)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+scroll_active = true
+autowrap_mode = 3
+text = "[b]市场尚未开张[/b]"
+
+[node name="AuctionPanel" type="PanelContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopSummaryRow"]
+custom_minimum_size = Vector2(0, 136)
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="AuctionVBox" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopSummaryRow/AuctionPanel"]
+theme_override_constants/separation = 6
+size_flags_vertical = 3
+
+[node name="AuctionTitle" type="Label" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopSummaryRow/AuctionPanel/AuctionVBox"]
+text = "拍卖台"
+
+[node name="AuctionInfo" type="RichTextLabel" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/TopSummaryRow/AuctionPanel/AuctionVBox"]
+bbcode_enabled = true
+fit_content = false
+custom_minimum_size = Vector2(0, 104)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+scroll_active = true
+autowrap_mode = 3
+text = "[b]等待出牌…[/b]"
+
 [node name="MainHBox" type="HBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox"]
 size_flags_vertical = 3
 theme_override_constants/separation = 12
 mouse_filter = 2
 
 [node name="LeftColumn" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox"]
-custom_minimum_size = Vector2(208, 0)
+custom_minimum_size = Vector2(214, 0)
 size_flags_horizontal = 3
-theme_override_constants/separation = 10
+theme_override_constants/separation = 6
 mouse_filter = 2
+
+[node name="LeftHeader" type="Label" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/LeftColumn"]
+text = "对手席"
 
 [node name="LeftPlayers" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/LeftColumn"]
 size_flags_vertical = 3
@@ -94,34 +155,57 @@ theme_override_constants/separation = 10
 mouse_filter = 2
 
 [node name="CenterColumn" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox"]
-custom_minimum_size = Vector2(520, 0)
+custom_minimum_size = Vector2(360, 0)
 size_flags_horizontal = 3
-theme_override_constants/separation = 10
+size_flags_vertical = 3
+theme_override_constants/separation = 0
 mouse_filter = 2
 
-[node name="AuctionWrap" type="CenterContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn"]
+[node name="TableStage" type="Control" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn"]
 size_flags_horizontal = 3
+size_flags_vertical = 3
 mouse_filter = 2
 
-[node name="AuctionCenterPanel" type="PanelContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/AuctionWrap"]
-custom_minimum_size = Vector2(440, 180)
+[node name="AuctionStageFrame" type="PanelContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/TableStage"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -140.0
+offset_right = 220.0
+offset_bottom = 140.0
+mouse_filter = 2
+visible = false
+
+[node name="AuctionStageMargin" type="MarginContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/TableStage/AuctionStageFrame"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 mouse_filter = 2
 
-[node name="AuctionVBox" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/AuctionWrap/AuctionCenterPanel"]
+[node name="AuctionStageVBox" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/TableStage/AuctionStageFrame/AuctionStageMargin"]
 theme_override_constants/separation = 8
+alignment = 1
+mouse_filter = 2
 
-[node name="AuctionInfo" type="RichTextLabel" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/AuctionWrap/AuctionCenterPanel/AuctionVBox"]
-bbcode_enabled = true
-fit_content = false
-custom_minimum_size = Vector2(0, 120)
-scroll_active = false
-text = "[b]等待出牌…[/b]"
+[node name="StageEyebrow" type="Label" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/TableStage/AuctionStageFrame/AuctionStageMargin/AuctionStageVBox"]
+horizontal_alignment = 1
+text = "LIVE AUCTION FLOOR"
+
+[node name="StageHint" type="Label" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/CenterColumn/TableStage/AuctionStageFrame/AuctionStageMargin/AuctionStageVBox"]
+horizontal_alignment = 1
+text = "作品将在这里上拍、成交并归档"
 
 [node name="RightColumn" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox"]
-custom_minimum_size = Vector2(208, 0)
+custom_minimum_size = Vector2(214, 0)
 size_flags_horizontal = 3
-theme_override_constants/separation = 10
+theme_override_constants/separation = 6
 mouse_filter = 2
+
+[node name="RightHeader" type="Label" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/RightColumn"]
+text = "竞拍席"
 
 [node name="RightPlayers" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/MainHBox/RightColumn"]
 size_flags_vertical = 3
@@ -129,34 +213,43 @@ theme_override_constants/separation = 10
 mouse_filter = 2
 
 [node name="BottomBar" type="Control" parent="Hud/HudRoot/LayoutMargin/LayoutVBox"]
-custom_minimum_size = Vector2(0, 96)
+custom_minimum_size = Vector2(0, 108)
 mouse_filter = 2
 
 [node name="BottomHBox" type="HBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/BottomBar"]
+size_flags_vertical = 3
 theme_override_constants/separation = 12
 mouse_filter = 2
 
-[node name="BottomLeftSpacer" type="Control" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/BottomBar/BottomHBox"]
-size_flags_horizontal = 0
-
 [node name="BottomPlayerSlot" type="VBoxContainer" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/BottomBar/BottomHBox"]
-custom_minimum_size = Vector2(240, 0)
-size_flags_horizontal = 0
+custom_minimum_size = Vector2(320, 0)
+size_flags_vertical = 3
 mouse_filter = 2
 
-[node name="BottomRightSpacer" type="Control" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/BottomBar/BottomHBox"]
+[node name="BottomHBoxSpacer" type="Control" parent="Hud/HudRoot/LayoutMargin/LayoutVBox/BottomBar/BottomHBox"]
 size_flags_horizontal = 3
+
+[node name="HandZoneFrame" type="PanelContainer" parent="Hud/HudRoot"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -380.0
+offset_top = -270.0
+offset_right = 120.0
+offset_bottom = -20.0
+mouse_filter = 2
 
 [node name="HandActionDock" type="PanelContainer" parent="Hud/HudRoot"]
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -340.0
-offset_top = -190.0
-offset_right = -16.0
-offset_bottom = -70.0
-mouse_filter = 1
+offset_left = -388.0
+offset_top = -320.0
+offset_right = -20.0
+offset_bottom = -20.0
+mouse_filter = 2
 
 [node name="DockMargin" type="MarginContainer" parent="Hud/HudRoot/HandActionDock"]
 anchors_preset = 15
@@ -164,29 +257,45 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 
-[node name="AuctionButtons" type="HBoxContainer" parent="Hud/HudRoot/HandActionDock/DockMargin"]
+[node name="DockVBox" type="VBoxContainer" parent="Hud/HudRoot/HandActionDock/DockMargin"]
+theme_override_constants/separation = 10
+mouse_filter = 2
+
+[node name="DockTitle" type="Label" parent="Hud/HudRoot/HandActionDock/DockMargin/DockVBox"]
+text = "报价面板"
+
+[node name="DockHint" type="Label" parent="Hud/HudRoot/HandActionDock/DockMargin/DockVBox"]
+text = "根据当前拍卖类型选择操作"
+autowrap_mode = 3
+
+[node name="AuctionButtons" type="VBoxContainer" parent="Hud/HudRoot/HandActionDock/DockMargin/DockVBox"]
 theme_override_constants/separation = 8
 mouse_filter = 2
 
-[node name="Btn1" type="Button" parent="Hud/HudRoot/HandActionDock/DockMargin/AuctionButtons"]
+[node name="Btn1" type="Button" parent="Hud/HudRoot/HandActionDock/DockMargin/DockVBox/AuctionButtons"]
 text = "—"
 disabled = true
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 42)
 
-[node name="Btn2" type="Button" parent="Hud/HudRoot/HandActionDock/DockMargin/AuctionButtons"]
+[node name="Btn2" type="Button" parent="Hud/HudRoot/HandActionDock/DockMargin/DockVBox/AuctionButtons"]
 text = "—"
 disabled = true
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 42)
 
-[node name="Btn3" type="Button" parent="Hud/HudRoot/HandActionDock/DockMargin/AuctionButtons"]
+[node name="Btn3" type="Button" parent="Hud/HudRoot/HandActionDock/DockMargin/DockVBox/AuctionButtons"]
 text = "—"
 disabled = true
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 42)
 
 [node name="Toast" type="Label" parent="Hud/HudRoot"]
 anchors_preset = 0
-offset_left = 16.0
-offset_top = 260.0
-offset_right = 900.0
-offset_bottom = 292.0
+offset_left = 28.0
+offset_top = 108.0
+offset_right = 780.0
+offset_bottom = 152.0
 text = ""
 visible = false
 mouse_filter = 2
-

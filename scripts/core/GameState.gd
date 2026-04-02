@@ -49,6 +49,7 @@ class AuctionState:
 	var once_order: Array[int] = []
 	var once_index: int = 0
 	var once_bids: Array[int] = [] # -1=pass
+	var once_current_bid: int = 0
 
 	# SEALED
 	var sealed_order: Array[int] = []
@@ -162,7 +163,7 @@ func human_submit_amount(amount: int) -> void:
 		HumanAction.OPEN_BID_OR_PASS:
 			_apply_open_bid(0, amount)
 		HumanAction.ONCE_BID_OR_PASS:
-			_apply_once_bid(0, amount)
+			_apply_once_bid(0, amount if amount > _auction.once_current_bid else -1)
 		HumanAction.SEALED_BID:
 			_apply_sealed_bid(0, amount)
 		HumanAction.FIXED_SET_PRICE:
@@ -284,11 +285,11 @@ func _play_and_maybe_auction(auctioneer: int, cards: Array[Dictionary], auction_
 	for c in cards:
 		_add_table_card(auctioneer, c)
 
-	var ends_round: bool = _is_round_end_triggered() or _all_hands_empty()
+	var ends_round: bool = _is_round_end_triggered()
 	emit_signal("card_played", {"player": auctioneer, "cards": cards, "auctioneer": auctioneer, "auction_type": auction_type, "ends_round": ends_round})
 
 	if ends_round:
-		_end_round(auctioneer, "触发第5张/牌打完，本轮结束（最后牌不拍卖）")
+		_end_round(auctioneer, "触发第5张，本轮结束（最后牌不拍卖）")
 		return
 
 	_begin_auction(auctioneer, cards, auction_type)
@@ -338,6 +339,7 @@ func _begin_auction(auctioneer: int, cards: Array[Dictionary], auction_type: int
 			_auction.once_order = _order_from_left_including_auctioneer(auctioneer)
 			_auction.once_index = 0
 			_auction.once_bids = []
+			_auction.once_current_bid = 0
 			for p in range(player_count):
 				_auction.once_bids.append(-1)
 		CardDefs.AuctionType.SEALED:
@@ -452,12 +454,14 @@ func _advance_once_around() -> void:
 
 	var ai = _ais[p_now]
 	var bid: int = int(ai.decide_once_bid(_auction_info_for_ai(p_now)))
-	if bid <= 0:
+	if bid <= _auction.once_current_bid:
 		_apply_once_bid(p_now, -1)
 	else:
 		_apply_once_bid(p_now, min(bid, player_cash[p_now]))
 
 func _apply_once_bid(p: int, bid: int) -> void:
+	if bid > _auction.once_current_bid:
+		_auction.once_current_bid = bid
 	_auction.once_bids[p] = bid
 	_auction.once_index += 1
 
@@ -551,6 +555,10 @@ func _finish_auction(winner: int, price: int, notes: String) -> void:
 	emit_signal("auction_resolved", {"auctioneer": auctioneer, "winner": winner, "price": price, "cards": cards, "notes": notes})
 	emit_signal("toast", "拍卖结束：%s 以 %d 购得" % [player_names[winner], price])
 
+	if _all_hands_empty():
+		_end_round(auctioneer, "所有手牌已拍卖完，进入最终结算", true)
+		return
+
 	phase = Phase.WAIT_PLAY_CARD
 	active_player = (auctioneer + 1) % player_count
 	_emit_snapshot()
@@ -607,7 +615,7 @@ func _auction_info_for_ui() -> Dictionary:
 		"auctioneer": _auction.auctioneer,
 		"kind": _auction.kind,
 		"cards": _auction.cards,
-		"highest_bid": _auction.open_highest_bid if _auction.kind == AuctionKind.OPEN else 0,
+		"highest_bid": _auction.open_highest_bid if _auction.kind == AuctionKind.OPEN else (_auction.once_current_bid if _auction.kind == AuctionKind.ONCE_AROUND else 0),
 		"fixed_price": _auction.fixed_price if _auction.kind == AuctionKind.FIXED_PRICE else -1,
 		"cash": player_cash.duplicate(),
 	}
@@ -710,7 +718,7 @@ func _apply_extra_choose_card(p: int, card_index: int) -> void:
 	var cards_for_auction: Array[Dictionary] = [_extra.base_card, add_card]
 	var auction_type: int = int(add_card.get("auction", 0))
 
-	var ends_round: bool = _is_round_end_triggered() or _all_hands_empty()
+	var ends_round: bool = _is_round_end_triggered()
 	emit_signal("card_played", {"player": p, "cards": cards_for_auction, "auctioneer": p, "auction_type": auction_type, "ends_round": ends_round})
 
 	_extra = null
@@ -728,7 +736,7 @@ func _extra_candidate_indices(p: int, artist: int) -> Array[int]:
 			res.append(i)
 	return res
 
-func _end_round(last_player: int, reason: String) -> void:
+func _end_round(last_player: int, reason: String, force_game_end: bool = false) -> void:
 	phase = Phase.ROUND_SCORING
 	emit_signal("toast", "本轮结算：" + reason)
 
@@ -739,8 +747,9 @@ func _end_round(last_player: int, reason: String) -> void:
 	# 30/20/10 标记累加
 	ScoringEngine.apply_round_markers(artist_values, table_counts)
 
-	# 按本轮售出牌结算（卖回银行）；桌面但未拍卖牌不计
-	var payouts: Array[int] = ScoringEngine.payout_for_sold_cards(artist_values, sold_cards_by_player)
+	# 只有本轮进入前三的艺术家才按其累计价值结算；其余艺术家本轮价值为0。
+	var round_values: Array[int] = ScoringEngine.current_round_values(artist_values, table_counts)
+	var payouts: Array[int] = ScoringEngine.payout_for_sold_cards(round_values, sold_cards_by_player)
 	for p in range(player_count):
 		player_cash[p] += payouts[p]
 
@@ -764,7 +773,7 @@ func _end_round(last_player: int, reason: String) -> void:
 	table_counts = [0, 0, 0, 0, 0]
 
 	round_index += 1
-	if round_index >= 4:
+	if force_game_end or round_index >= 4:
 		_end_game()
 		return
 
