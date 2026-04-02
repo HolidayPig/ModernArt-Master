@@ -6,3 +6,6 @@
 /assets/_tmp/
 /assets/downloaded/
 /assets/fonts/
+
+# macOS
+.DS_Store
